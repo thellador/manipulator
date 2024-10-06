@@ -7,16 +7,12 @@ from time import sleep
 
 import sqlite3
 
-
-# Configure the COM port
 port = "COM6"  # Replace with the appropriate COM port name
 baudrate = 115200
 
-# Подключение к базе данных
 conn = sqlite3.connect("database.db")
 cursor = conn.cursor()
 
-# Извлечение последней записи (можно изменить запрос в зависимости от ваших требований)
 cursor.execute('''
 SELECT xGreen, yGreen, xYellow, yYellow
 FROM manipulator
@@ -27,14 +23,14 @@ LIMIT 1
 row = cursor.fetchone()
 conn.close()
 
-# Обработка и вывод данных
+
 if row:
     xGreen, yGreen, xYellow, yYellow = row
     print(f"xGreen: {xGreen}, yGreen: {yGreen}, xYellow: {xYellow}, yYellow: {yYellow}")
 else:
     print("No data found")
 
-# Закрытие соединения
+
 conn.close()
 
 def move_to_position_cart(x, y, z):
@@ -43,11 +39,10 @@ def move_to_position_cart(x, y, z):
     l2 = 120 
     l3 = 120
 
-    r_compensation = 1.00  # Коэффициент компенсации (2%)
+    r_compensation = 1.00
     r_hor = sqrt(x ** 2 + y ** 2)
     r = sqrt(r_hor ** 2 + (z - l0) ** 2) * r_compensation
-
-    # Рассчитываем угол для базы
+#theta_base
     if y == 0:
         if x <= 0:
             theta_base = 180
@@ -56,32 +51,30 @@ def move_to_position_cart(x, y, z):
     else:
         theta_base = 90 - degrees(atan(x / y))
 
-    # Корректируем координаты только после расчета угла базы
-    y -= 15  # Учитываем смещение по оси Y
 
-    # Рассчитываем углы для плеча, локтя и запястья
+    y -= 15  # y corrections
+
+    # 1 2 3 axis
     alpha1 = acos(((r - l2) / (l1 + l3)))
     theta_shoulder = degrees(alpha1)
     alpha3 = asin((sin(alpha1) * l3 - sin(alpha1) * l1) / l2)
     theta_elbow = (90 - degrees(alpha1)) + degrees(alpha3)
     theta_wrist = (90 - degrees(alpha1)) - degrees(alpha3)
 
-    # Проверяем граничные условия для запястья
     if theta_wrist <= 0:
         alpha1 = acos(((r - l2) / (l1 + l3)))
         theta_shoulder = degrees(alpha1 + asin((l3 - l1) / r))
         theta_elbow = (90 - degrees(alpha1))
         theta_wrist = (90 - degrees(alpha1))
 
-    # Корректируем угол для плеча, если z не совпадает с l0
+
     if z != l0:
         theta_shoulder = theta_shoulder + degrees(atan(((z - l0) / r)))
 
-    # Преобразуем углы для соответствия формату передачи в Arduino
+
     theta_elbow = 180 - theta_elbow
     theta_wrist = theta_wrist
 
-    # Формируем список углов
     theta_array = [round(theta_base + 5), round(theta_shoulder-1), round(theta_elbow+3), round(theta_wrist+1)]
     return theta_array
 
@@ -96,11 +89,10 @@ try:
     while True:
         what_colour = input("Выберите цвет: ")
         if what_colour == "g":
-            # Подключение к базе данных
+
             conn = sqlite3.connect("database.db")
             cursor = conn.cursor()
 
-            # Извлечение последней записи (можно изменить запрос в зависимости от ваших требований)
             cursor.execute('''
             SELECT xGreen, yGreen, xYellow, yYellow
             FROM manipulator
@@ -111,14 +103,13 @@ try:
             row = cursor.fetchone()
             conn.close()
 
-            # Обработка и вывод данных
+
             if row:
                 xGreen, yGreen, xYellow, yYellow = row
                 print(f"xGreen: {xGreen}, yGreen: {yGreen}, xYellow: {xYellow}, yYellow: {yYellow}")
             else:
                 print("No data found")
 
-            # Закрытие соединения
             conn.close()
 
             x = xGreen
@@ -126,11 +117,11 @@ try:
             z = 15
 
         if what_colour == "y":
-            # Подключение к базе данных
+
             conn = sqlite3.connect("database.db")
             cursor = conn.cursor()
 
-            # Извлечение последней записи (можно изменить запрос в зависимости от ваших требований)
+
             cursor.execute('''
             SELECT xGreen, yGreen, xYellow, yYellow
             FROM manipulator
@@ -141,14 +132,13 @@ try:
             row = cursor.fetchone()
             conn.close()
 
-            # Обработка и вывод данных
+
             if row:
                 xGreen, yGreen, xYellow, yYellow = row
                 print(f"xGreen: {xGreen}, yGreen: {yGreen}, xYellow: {xYellow}, yYellow: {yYellow}")
             else:
                 print("No data found")
 
-            # Закрытие соединения
             conn.close()
 
             x = xYellow
@@ -189,7 +179,7 @@ try:
         ser.write(command.encode())
         print(f"Sent command: {command}")
         sleep(1)
-        command = f"{0} {90} {90} 65 {90} 75" #agle for kleshnia
+        command = f"{0} {90} {90} 65 {90} 75" #agle for hand
         ser.write(command.encode())
         print(f"Sent command: {command}")
 
